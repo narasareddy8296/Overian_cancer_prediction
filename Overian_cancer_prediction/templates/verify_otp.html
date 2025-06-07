@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Email - Ovarian Cancer Risk Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#0E0F1A',
+                            card: '#1B1D2A',
+                            border: '#2D2F45',
+                            input: '#2C2F3C'
+                        }
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark-bg font-inter text-gray-100 min-h-screen flex items-center justify-center">
+    <div class="max-w-md w-full mx-auto p-6">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-violet-400">Verify Your Email</h1>
+            <p class="text-gray-400 mt-2">Enter the verification code sent to your email</p>
+        </div>
+
+        <form action="/auth/verify-otp" method="POST" class="space-y-6 bg-dark-card border border-dark-border shadow-xl rounded-xl p-8">
+            <div class="space-y-4">
+                <div class="flex justify-center gap-2">
+                    <input type="text" name="digit0" maxlength="1" class="w-12 h-12 text-center rounded-sm bg-dark-input border-dark-border text-gray-100 text-2xl focus:border-violet-500 focus:ring-violet-500">
+                    <input type="text" name="digit1" maxlength="1" class="w-12 h-12 text-center rounded-sm bg-dark-input border-dark-border text-gray-100 text-2xl focus:border-violet-500 focus:ring-violet-500">
+                    <input type="text" name="digit2" maxlength="1" class="w-12 h-12 text-center rounded-sm bg-dark-input border-dark-border text-gray-100 text-2xl focus:border-violet-500 focus:ring-violet-500">
+                    <input type="text" name="digit3" maxlength="1" class="w-12 h-12 text-center rounded-sm bg-dark-input border-dark-border text-gray-100 text-2xl focus:border-violet-500 focus:ring-violet-500">
+                    <input type="text" name="digit4" maxlength="1" class="w-12 h-12 text-center rounded-sm bg-dark-input border-dark-border text-gray-100 text-2xl focus:border-violet-500 focus:ring-violet-500">
+                    <input type="text" name="digit5" maxlength="1" class="w-12 h-12 text-center rounded-sm bg-dark-input border-dark-border text-gray-100 text-2xl focus:border-violet-500 focus:ring-violet-500">
+                </div>
+            </div>
+
+            <div class="text-center">
+                <p class="text-sm text-gray-400">Didn't receive the code?</p>
+                <button type="button" class="text-violet-400 hover:text-violet-300 text-sm font-medium mt-2">
+                    Resend Code
+                </button>
+            </div>
+
+            <button type="submit" 
+                class="w-full bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out shadow-lg hover:shadow-violet-500/20">
+                Verify Email
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // Auto-focus next input and numbers only
+        const inputs = document.querySelectorAll('input[type="text"]');
+        inputs.forEach((input, index) => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key >= '0' && e.key <= '9') {
+                    if (index < inputs.length - 1) inputs[index + 1].focus();
+                } else if (e.key === 'Backspace') {
+                    if (index > 0) inputs[index - 1].focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

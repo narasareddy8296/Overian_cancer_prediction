@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>    <title>Ovarian Cancer Risk Assessment Results</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            primary: '#0E0F1A',
+                            card: '#1B1D2A',
+                            border: '#2D2F45',
+                            input: '#2C2F3C'
+                        }
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark-primary font-inter text-gray-100">
+    <div class="max-w-4xl mx-auto p-6 space-y-8">
+        <div class="bg-dark-card rounded-2xl shadow-xl p-8 space-y-6 border border-dark-border">            <!-- Risk Assessment Results -->
+            <div class="text-center pb-6 border-b border-dark-border">
+                <h1 class="text-3xl font-bold mb-6 text-white">Risk Assessment Results</h1>
+                <div class="inline-flex items-center justify-center space-x-4 bg-dark-input rounded-xl px-6 py-3 border border-dark-border">
+                    <div class="text-lg text-gray-300">Risk Level:</div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas {% if risk_level == 'HIGH' %}fa-exclamation-triangle{% elif risk_level == 'MEDIUM' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} {{ risk_color }}"></i>
+                        <div class="text-2xl font-bold {{ risk_color }}">{{ risk_level }}</div>
+                    </div>
+                    <div class="text-lg text-gray-300">({{ probability }})</div>
+                </div>
+                <p class="mt-4 text-gray-400 text-sm">Assessment generated on {{ now.strftime('%B %d, %Y at %I:%M %p') }}</p>
+            </div>
+
+            {% if error %}
+            <div class="bg-red-900/30 border border-red-700 text-red-400 px-4 py-3 rounded-lg">
+                {{ error }}
+            </div>
+            {% else %}
+            <!-- Health Advice Sections -->            <div class="space-y-6">
+                <!-- Risk Factors Section -->
+                <section class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-exclamation-circle text-violet-400 text-xl"></i>
+                        <h2 class="text-xl font-semibold text-violet-400">Risk Factors</h2>
+                    </div>
+                    <div class="bg-dark-input rounded-lg p-4 text-gray-300">
+                        {{ advice.risk_factors|safe }}
+                    </div>
+                </section>
+
+                <!-- Dietary Recommendations Section -->
+                <section class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-apple-alt text-violet-400 text-xl"></i>
+                        <h2 class="text-xl font-semibold text-violet-400">Dietary Recommendations</h2>
+                    </div>
+                    <div class="bg-dark-input rounded-lg p-4 text-gray-300">
+                        {{ advice.diet|safe }}
+                    </div>
+                </section>
+
+                <!-- Exercise Guidelines Section -->
+                <section class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-running text-violet-400 text-xl"></i>
+                        <h2 class="text-xl font-semibold text-violet-400">Exercise Guidelines</h2>
+                    </div>
+                    <div class="bg-dark-input rounded-lg p-4 text-gray-300">
+                        {{ advice.exercise|safe }}
+                    </div>
+                </section>
+
+                <!-- Important Signs Section -->
+                <section class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-heartbeat text-violet-400 text-xl"></i>
+                        <h2 class="text-xl font-semibold text-violet-400">Important Signs to Monitor</h2>
+                    </div>
+                    <div class="bg-dark-input rounded-lg p-4 text-gray-300">
+                        {{ advice.warning_signs|safe }}
+                    </div>
+                </section>
+
+               
+
+                {% if risk_details %}
+                <!-- Lifestyle Risk Factors -->
+                <section class="space-y-3">
+                    <h2 class="text-xl font-semibold text-violet-400">Lifestyle Risk Factors</h2>
+                    <div class="bg-dark-input rounded-lg p-4 space-y-4">
+                        {% for detail in risk_details %}
+                        <div class="border-b border-dark-border pb-4 last:border-b-0 last:pb-0">
+                            <h3 class="font-medium text-white">{{ detail.factor }}</h3>
+                            <p class="text-sm text-gray-400 mt-1">{{ detail.details }}</p>
+                            <p class="text-sm text-red-400 mt-1">Risk increase: {{ detail.increase }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Back Button -->            <div class="mt-8 text-center space-y-4">
+                <p class="text-gray-400 text-sm italic">Remember: This assessment is for informational purposes only. Always consult with healthcare professionals for medical advice.</p>
+                <div class="flex justify-center space-x-4">
+                    <a href="/prediction" class="inline-flex items-center bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out shadow-lg hover:shadow-violet-500/20">
+                        <i class="fas fa-redo-alt mr-2"></i>
+                        Start New Assessment
+                    </a>
+                    <button onclick="window.print()" class="inline-flex items-center bg-dark-input hover:bg-gray-700 text-gray-300 font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out border border-dark-border">
+                        <i class="fas fa-print mr-2"></i>
+                        Print Results
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

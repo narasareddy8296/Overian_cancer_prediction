@@ -1,91 +1,192 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Cancer Risk Assessment</title>
-    <!-- Add Tailwind CSS CDN -->
+    <title>Ovarian Cancer Risk Assessment</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#0E0F1A',
+                            card: '#1B1D2A',
+                            border: '#2D2F45',
+                            input: '#2C2F3C'
+                        }
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-dark-bg font-inter text-gray-100 min-h-screen">
     <div class="max-w-4xl mx-auto p-6 space-y-8">
-        <h1 class="text-3xl font-bold text-gray-900 text-center mb-8">Cancer Risk Assessment</h1>
+        <h1 class="text-3xl font-bold text-center mb-8 text-violet-400">Ovarian Cancer Risk Assessment</h1>
         
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-blue-800">
-            📋 Sample values have been pre-filled in the form below. You can edit or delete these values to enter your own data.
+        <div class="bg-dark-card border border-violet-500/20 rounded-xl p-4 mb-6 text-violet-300">
+            📋 Sample values have been pre-filled in the form below. All fields are optional - you can input the values you have available.
         </div>
 
-        <form id="assessment-form" class="space-y-6 bg-white shadow-md rounded-lg p-6">
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="space-y-2">
-                    <label for="patient_id" class="block text-sm font-medium text-gray-700">Patient ID:</label>
-                    <input type="number" id="patient_id" name="patient_id" value="999" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+        <form id="assessment-form" class="space-y-6 bg-dark-card border border-dark-border shadow-xl rounded-xl p-8">
+            <div class="grid md:grid-cols-2 gap-6">                <div class="space-y-2">
+                    <label for="age" class="block text-sm font-medium text-gray-300">
+                        Patient Age:
+                        <span class="text-xs text-gray-500 ml-1">(20-85 years)</span>
+                    </label>
+                    <input type="number" id="age" name="age" 
+                        min="20" max="85" value="45"
+                        placeholder="Enter age"
+                        title="Patient age must be between 18 and 100 years"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
                 </div>
-                
+
                 <div class="space-y-2">
-                    <label for="age" class="block text-sm font-medium text-gray-700">Patient Age:</label>
-                    <input type="number" id="age" name="age" value="45" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                
-                <div class="space-y-2">
-                    <label for="afp" class="block text-sm font-medium text-gray-700">Alpha-Fetoprotein (AFP) Level (ng/mL):</label>
-                    <input type="number" id="afp" name="afp" step="0.1" value="2.5" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                
-                <div class="space-y-2">
-                    <label for="alb" class="block text-sm font-medium text-gray-700">Albumin (ALB) Level (g/dL):</label>
-                    <input type="number" id="alb" name="alb" step="0.1" value="4.2" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                
-                <div class="space-y-2">
-                    <label for="alt" class="block text-sm font-medium text-gray-700">Alanine Aminotransferase (ALT) (U/L):</label>
-                    <input type="number" id="alt" name="alt" step="0.1" value="15.0" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                
-                <div class="space-y-2">
-                    <label for="ast" class="block text-sm font-medium text-gray-700">Aspartate Aminotransferase (AST) (U/L):</label>
-                    <input type="number" id="ast" name="ast" step="0.1" value="20.0" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                
-                <div class="space-y-2">
-                    <label for="plt" class="block text-sm font-medium text-gray-700">Platelet Count (PLT) (K/µL):</label>
-                    <input type="number" id="plt" name="plt" value="250" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                </div>
-                
-                <div class="space-y-2">
-                    <label for="menopause" class="block text-sm font-medium text-gray-700">Menopausal Status:</label>
-                    <select id="menopause" name="menopause" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                        <option value="0" selected>No</option>
+                    <label for="menopause" class="block text-sm font-medium text-gray-300">Menopausal Status:</label>
+                    <select id="menopause" name="menopause"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 focus:border-violet-500 focus:ring-violet-500">
+                        <option value="" selected>Not specified</option>
+                        <option value="0">No</option>
                         <option value="1">Yes</option>
                     </select>
                 </div>
-                
+
                 <div class="space-y-2">
-                    <label for="baso_count" class="block text-sm font-medium text-gray-700">Basophil Count (BASO#) (K/µL):</label>
-                    <input type="number" id="baso_count" name="baso_count" step="0.01" value="0.02" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <label for="family_history" class="block text-sm font-medium text-gray-300">Family History of Ovarian Cancer:</label>
+                    <select id="family_history" name="family_history"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 focus:border-violet-500 focus:ring-violet-500">
+                        <option value="" selected>Not specified</option>
+                        <option value="0">No</option>
+                        <option value="1">First-degree relative</option>
+                        <option value="2">Second-degree relative</option>
+                    </select>
                 </div>
-                
+
                 <div class="space-y-2">
-                    <label for="baso_percent" class="block text-sm font-medium text-gray-700">Basophil Percentage (BASO%) (%):</label>
-                    <input type="number" id="baso_percent" name="baso_percent" step="0.1" value="0.3" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <label for="smoking_status" class="block text-sm font-medium text-gray-300">Smoking Status:</label>
+                    <select id="smoking_status" name="smoking_status"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 focus:border-violet-500 focus:ring-violet-500">
+                        <option value="" selected>Not specified</option>
+                        <option value="0">Never smoker</option>
+                        <option value="1">Former smoker</option>
+                        <option value="2">Current smoker</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="alcohol_consumption" class="block text-sm font-medium text-gray-300">Alcohol Consumption:</label>
+                    <select id="alcohol_consumption" name="alcohol_consumption"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 focus:border-violet-500 focus:ring-violet-500">
+                        <option value="" selected>Not specified</option>
+                        <option value="0">None</option>
+                        <option value="1">Occasional (≤1 drink/week)</option>
+                        <option value="2">Moderate (2-7 drinks/week)</option>
+                        <option value="3">Heavy (>7 drinks/week)</option>
+                    </select>
+                </div>                <div class="space-y-2">
+                    <label for="ggt" class="block text-sm font-medium text-gray-300">
+                        Gamma GT (GGT):
+                        <span class="text-xs text-gray-500 ml-1">(0-500 U/L)</span>
+                    </label>
+                    <input type="number" id="ggt" name="ggt" 
+                        step="1" min="0" max="500" value="60"
+                        placeholder="Enter GGT value"
+                        title="Normal range: 0-500 U/L"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
+                </div>                <div class="space-y-2">
+                    <label for="hgb" class="block text-sm font-medium text-gray-300">
+                        Hemoglobin (HGB):
+                        <span class="text-xs text-gray-500 ml-1">(120-160 g/L)</span>
+                    </label>
+                    <input type="number" id="hgb" name="hgb" 
+                        step="1" min="0" max="160" value="120"
+                        placeholder="Enter HGB value"
+                        title="Normal range: 120-160 g/L"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
+                </div>                <div class="space-y-2">
+                    <label for="afp" class="block text-sm font-medium text-gray-300">
+                        Alpha-Fetoprotein (AFP):
+                        <span class="text-xs text-gray-500 ml-1">(0-1000 ng/mL)</span>
+                    </label>
+                    <input type="number" id="afp" name="afp" 
+                        step="0.1" min="0" max="1000" value="15.0"
+                        placeholder="Enter AFP value"
+                        title="Normal range: 0-1000 ng/mL"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
+                </div>                <div class="space-y-2">
+                    <label for="ca72_4" class="block text-sm font-medium text-gray-300">
+                        CA72-4:
+                        <span class="text-xs text-gray-500 ml-1">(0-100 U/mL)</span>
+                    </label>
+                    <input type="number" id="ca72_4" name="ca72_4" 
+                        step="0.1" min="0" max="300" value="15.0"
+                        placeholder="Enter CA72-4 value"
+                        title="Normal range: 0-100 U/mL"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
+                </div>                <div class="space-y-2">
+                    <label for="alp" class="block text-sm font-medium text-gray-300">
+                        Alkaline Phosphatase (ALP):
+                        <span class="text-xs text-gray-500 ml-1">(30-150 U/L)</span>
+                    </label>
+                    <input type="number" id="alp" name="alp" 
+                        step="1" min="30" max="150" value="70"
+                        placeholder="Enter ALP value"
+                        title="Normal range: 30-150 U/L"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
+                </div>                <div class="space-y-2">
+                    <label for="ca19_9" class="block text-sm font-medium text-gray-300">
+                        CA19-9:
+                        <span class="text-xs text-gray-500 ml-1">(0-60 U/mL)</span>
+                    </label>
+                    <input type="number" id="ca19_9" name="ca19_9" 
+                        step="0.1" min="0" max="60" value="15.0"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
+                </div>                <div class="space-y-2">
+                    <label for="he4" class="block text-sm font-medium text-gray-300">
+                        HE4:
+                        <span class="text-xs text-gray-500 ml-1">(0-140 pmol/L)</span>
+                    </label>
+                    <input type="number" id="he4" name="he4" 
+                        step="0.1" min="0" max="1000" value="40.0"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
+                </div>                <div class="space-y-2">
+                    <label for="cea" class="block text-sm font-medium text-gray-300">
+                        CEA:
+                        <span class="text-xs text-gray-500 ml-1">(0-10 ng/mL)</span>
+                    </label>
+                    <input type="number" id="cea" name="cea" 
+                        step="0.1" min="0" max="20" value="2.5"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
+                </div>                <div class="space-y-2">
+                    <label for="ca125" class="block text-sm font-medium text-gray-300">
+                        CA125:
+                        <span class="text-xs text-gray-500 ml-1">(0-35 U/mL)</span>
+                    </label>
+                    <input type="number" id="ca125" name="ca125" 
+                        step="0.1" min="0" max="3000" value="35.0"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
+                </div>                <div class="space-y-2">
+                    <label for="ca" class="block text-sm font-medium text-gray-300">
+                        Calcium (Ca):
+                        <span class="text-xs text-gray-500 ml-1">(2.12-2.62 mmol/L)</span>
+                    </label>
+                    <input type="number" id="ca" name="ca" 
+                        step="0.1" min="1.5" max="10.2" value="2.12"
+                        class="mt-1 block w-full rounded-xl bg-dark-input border-dark-border text-gray-100 placeholder-gray-500 focus:border-violet-500 focus:ring-violet-500">
                 </div>
             </div>
 
-            <div class="flex gap-4 pt-4">
+            <div class="flex gap-4 pt-6">
                 <button type="submit" 
-                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-150 ease-in-out">
+                    class="flex-1 bg-violet-600 hover:bg-violet-700 text-white font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out shadow-lg hover:shadow-violet-500/20">
                     Analyze Results
                 </button>
                 <button type="reset" 
-                    class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition duration-150 ease-in-out">
+                    class="flex-1 bg-dark-input hover:bg-gray-700 text-gray-300 font-bold py-3 px-6 rounded-xl transition duration-150 ease-in-out border border-dark-border">
                     Clear Form
                 </button>
             </div>
@@ -106,8 +207,8 @@
             
             // Show loading state
             document.getElementById('result-container').innerHTML = `
-                <div class="animate-pulse rounded-lg border p-6 text-center bg-gray-50">
-                    <p class="text-gray-600">Analyzing results...</p>
+                <div class="animate-pulse rounded-xl border border-dark-border p-6 text-center bg-dark-card">
+                    <p class="text-gray-400">Analyzing results...</p>
                 </div>
             `;
             
@@ -122,7 +223,7 @@
             })
             .catch(error => {
                 document.getElementById('result-container').innerHTML = `
-                    <div class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">
+                    <div class="bg-red-900/30 border border-red-500/20 text-red-400 rounded-xl p-6">
                         Error: ${error.message}
                     </div>`;
             });
@@ -136,6 +237,17 @@
         // Clear results when any input changes
         document.querySelectorAll('#assessment-form input, #assessment-form select').forEach(input => {
             input.addEventListener('change', clearResults);
+        });
+
+        // Enable native HTML5 validation tooltips
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('invalid', function(e) {
+                if (input.value === '') {
+                    e.target.setCustomValidity('Please enter a value');
+                } else {
+                    e.target.setCustomValidity('');
+                }
+            });
         });
     </script>
 </body>

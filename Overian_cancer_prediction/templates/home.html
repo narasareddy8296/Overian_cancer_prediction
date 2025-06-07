@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ovarian Cancer Risk Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#0E0F1A',
+                            card: '#1B1D2A',
+                            border: '#2D2F45',
+                            input: '#2C2F3C'
+                        }
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-dark-bg font-inter text-gray-100">
+    <!-- Navigation -->
+    <nav class="border-b border-dark-border">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-violet-400">Ovarian Cancer Risk Assessment</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="#" class="text-gray-300 hover:text-violet-400">Home</a>
+                    <a href="#" class="text-gray-300 hover:text-violet-400">About</a>
+                    <a href="#" class="text-gray-300 hover:text-violet-400">Features</a>
+                    <a href="#" class="text-gray-300 hover:text-violet-400">Prediction</a>
+                    <a href="#" class="text-gray-300 hover:text-violet-400">Contact</a>
+                    <a href="/login" class="text-violet-400 hover:text-violet-300 px-4 py-2 rounded-lg border border-violet-400/30">Sign In</a>
+                    <a href="/signup" class="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded-lg shadow-lg hover:shadow-violet-500/20">Sign Up</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="relative overflow-hidden py-16 sm:py-24">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="lg:grid lg:grid-cols-2 lg:gap-8 items-center">
+                <div class="mb-8 lg:mb-0">
+                    <h1 class="text-4xl font-bold text-violet-400 mb-4">Early Detection Saves Lives</h1>
+                    <p class="text-xl text-gray-300 mb-8">Use AI-driven insights to assess your ovarian cancer risk with confidence</p>
+                    <a href="/login" class="inline-flex items-center px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-bold transition shadow-lg hover:shadow-violet-500/20">
+                        Start Risk Assessment
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+                <div class="relative">
+                    <div class="bg-dark-card border border-dark-border rounded-2xl p-8 shadow-xl">
+                        <img src="https://via.placeholder.com/500x300" alt="Healthcare Illustration" class="rounded-lg">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="bg-dark-card border-y border-dark-border py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center text-violet-400 mb-12">How It Works</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center p-6">
+                    <div class="bg-dark-input rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-clipboard-list text-2xl text-violet-400"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">Fill in Health Info</h3>
+                    <p class="text-gray-400">Provide your health information securely and confidentially</p>
+                </div>
+                <!-- Similar blocks for AI Analysis and View Results -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Features -->
+    <div class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold text-center text-violet-400 mb-12">Key Features</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Feature cards with icons and descriptions -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark-card border-t border-dark-border py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8">
+                <!-- Quick links and contact info -->
+            </div>
+            <div class="mt-8 pt-8 border-t border-dark-border text-center text-sm text-gray-400">
+                <p>© 2024 Ovarian Cancer Risk Assessment. This tool is for informational purposes only and should not replace professional medical advice.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

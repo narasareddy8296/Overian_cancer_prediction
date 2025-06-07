@@ -1,0 +1,417 @@
+import logging
+import requests
+
+logger = logging.getLogger(__name__)
+
+TOGETHER_API_KEY = "tgp_v1_MD6iZEhrnGDjnka_olEfwlDYNaxh67Tl-2yMVFUxqU8"
+TOGETHER_API_URL = "https://api.together.xyz/v1/chat/completions"
+TOGETHER_MODEL = "meta-llama/Llama-3.3-70B-Instruct-Turbo"  # Updated to new model
+
+def generate_health_advice(input_data, prediction_result):
+    """Generate personalized health advice using Together AI LLM API"""
+    try:
+        risk_level = "high" if prediction_result['probability'] > 0.7 else "medium" if prediction_result['probability'] > 0.3 else "low"
+        
+        prompt = f"""You are a medical expert providing health recommendations for a patient with ovarian cancer risk assessment. Please provide gentle but informative advice based on the following patient data:
+
+Risk Assessment Results:
+- Risk Level: {risk_level.upper()} (Risk Score: {prediction_result['probability']:.1%})
+- Age: {input_data['Age']} years
+- Menopausal Status: {'Post-menopausal' if input_data['Menopause'] else 'Pre-menopausal'}
+
+Lab Values:
+- CA125: {input_data['CA125']} U/mL (Normal Range: 0-35 U/mL)
+- HE4: {input_data['HE4']} pmol/L (Normal Range: 0-140 pmol/L)
+- CA19-9: {input_data['CA19-9']} U/mL (Normal Range: 0-37 U/mL)
+- CEA: {input_data['CEA']} ng/mL
+- AFP: {input_data['AFP']} ng/mL
+
+Please provide compassionate and detailed recommendations in these categories. Format each section with a clear heading and bullet points:
+
+1. Risk Factors:
+- List both modifiable and non-modifiable risk factors
+- Explain their relevance to the patient's current situation
+- Include any genetic or family history considerations
+- Discuss lifestyle factors that may affect risk
+
+2. Dietary Recommendations:
+- Specific foods to include in the diet
+- Nutrients that may help reduce risk
+- Foods to limit or avoid
+- Practical meal planning tips
+
+3. Exercise Guidelines:
+- Recommended types of physical activity
+- Frequency and duration of exercise
+- Safety considerations
+- Benefits of regular physical activity
+
+4. Important Signs to Monitor:
+- Early warning signs to be aware of
+- Changes to watch for
+- When to contact a healthcare provider
+- Regular screening recommendations
+
+5. Daily Wellness Tips:
+- Three specific, actionable daily habits
+- Stress management techniques
+- Sleep recommendations
+- Mental health support strategies
+
+Please write in a supportive, encouraging tone while maintaining medical accuracy. Avoid alarmist language."""
+
+        payload = {
+            "model": TOGETHER_MODEL,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a compassionate medical expert specializing in women's health and ovarian cancer risk assessment. Provide evidence-based advice while maintaining a supportive and gentle tone. Format your response with clear section headings and bullet points for easy reading."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "temperature": 0.4,
+            "top_p": 0.9,
+            "max_tokens": 1500,  # Increased token limit for more detailed responses
+            "frequency_penalty": 0.3,
+            "presence_penalty": 0.3
+        }
+
+        headers = {
+            "Authorization": f"Bearer {TOGETHER_API_KEY}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(TOGETHER_API_URL, headers=headers, json=payload, timeout=45)
+        response.raise_for_status()
+        
+        data = response.json()
+        logger.info(f"API Response status: {response.status_code}")
+        
+        if "choices" in data and data["choices"]:
+            advice_text = data["choices"][0]["message"]["content"].strip()
+            sections = parse_response(advice_text)
+            
+            # Ensure all sections are populated
+            if any(not v or v == "Information not available" for v in sections.values()):
+                logger.warning("Some sections were missing in the response. Using backup content.")
+                sections = enhance_missing_sections(sections, risk_level)
+            
+            return sections
+        else:            logger.error(f"Unexpected API response: {data}")
+            return get_personalized_default_advice(
+                risk_level="high" if prediction_result['probability'] > 0.7 else "medium" if prediction_result['probability'] > 0.3 else "low",
+                age=input_data.get('Age', 45),
+                is_postmenopausal=bool(input_data.get('Menopause', 0)),
+                marker_levels={
+                    'CA125': input_data.get('CA125', 35.0),
+                    'HE4': input_data.get('HE4', 40.0),
+                    'CA19_9': input_data.get('CA19-9', 15.0)
+                }
+            )
+
+    except Exception as e:
+        logger.error(f"Error generating health advice: {str(e)}")
+        return get_personalized_default_advice(
+            risk_level="medium",  # Default to medium if we can't determine
+            age=45,  # Default age
+            is_postmenopausal=False,
+            marker_levels={}
+        )
+
+def parse_response(text):
+    """Parse the LLM response into sections"""
+    try:
+        # Define section markers for more reliable extraction
+        sections = {
+            'risk_factors': extract_section(text, "Risk Factors:", "Dietary Recommendations:"),
+            'diet': extract_section(text, "Dietary Recommendations:", "Exercise Guidelines:"),
+            'exercise': extract_section(text, "Exercise Guidelines:", "Important Signs"),
+            'warning_signs': extract_section(text, "Important Signs", "Daily Wellness"),
+            'wellness_tips': extract_wellness_tips(extract_section(text, "Daily Wellness", None))
+        }
+        
+        # Clean up and format sections
+        sections = {k: format_section(v) for k, v in sections.items()}
+        return sections
+    except Exception as e:
+        logger.error(f"Error parsing response: {str(e)}")
+        return get_default_advice()
+
+def format_section(text):
+    """Format a section's content into clean HTML with bullet points"""
+    if not text or text == "Information not available":
+        return "Information not available"
+    
+    # Convert plain bullet points into HTML list items
+    lines = text.split('\n')
+    formatted_lines = []
+    
+    for line in lines:
+        line = line.strip()
+        if line.startswith('•') or line.startswith('-'):
+            line = f"<li>{line.lstrip('•- ')}</li>"
+        elif line and not line.startswith('<'):
+            formatted_lines.append(f"<p>{line}</p>")
+        else:
+            formatted_lines.append(line)
+    
+    if any(line.startswith('<li>') for line in formatted_lines):
+        return f"<ul class='list-disc pl-5 space-y-2'>{''.join(formatted_lines)}</ul>"
+    return ''.join(formatted_lines)
+
+def enhance_missing_sections(sections, risk_level):
+    """Provide backup content for missing sections"""
+    defaults = {
+        'risk_factors': f"""<ul class='list-disc pl-5 space-y-2'>
+            <li>Age and menopausal status</li>
+            <li>Family history of ovarian or breast cancer</li>
+            <li>Genetic mutations (BRCA1, BRCA2)</li>
+            <li>Reproductive history</li>
+            <li>Lifestyle factors including diet and exercise</li>
+        </ul>""",
+        'diet': """<ul class='list-disc pl-5 space-y-2'>
+            <li>Maintain a balanced diet rich in fruits and vegetables</li>
+            <li>Include foods high in antioxidants and fiber</li>
+            <li>Limit processed foods and red meat</li>
+            <li>Stay well-hydrated with water</li>
+            <li>Consider consulting a nutritionist for personalized advice</li>
+        </ul>""",
+        'exercise': """<ul class='list-disc pl-5 space-y-2'>
+            <li>Aim for 150 minutes of moderate activity per week</li>
+            <li>Include both cardio and strength training exercises</li>
+            <li>Start slowly and gradually increase intensity</li>
+            <li>Listen to your body and rest when needed</li>
+            <li>Consider activities like walking, swimming, or yoga</li>
+        </ul>""",
+        'warning_signs': """<ul class='list-disc pl-5 space-y-2'>
+            <li>Persistent bloating or abdominal discomfort</li>
+            <li>Changes in appetite or feeling full quickly</li>
+            <li>Unexplained weight changes</li>
+            <li>Changes in bathroom habits</li>
+            <li>Unusual fatigue or pain</li>
+        </ul>""",
+        'wellness_tips': [
+            "Practice stress reduction through meditation or deep breathing",
+            "Maintain a regular sleep schedule with 7-8 hours per night",
+            "Stay connected with your support network and healthcare team"
+        ]
+    }
+    
+    return {k: v if v and v != "Information not available" else defaults.get(k, "Information not available") 
+            for k, v in sections.items()}
+
+def get_personalized_default_advice(risk_level, age, is_postmenopausal, marker_levels):
+    """Generate personalized default advice based on risk factors"""
+    # Determine diet recommendations based on risk and markers
+    diet_recs = []
+    if risk_level == "high":
+        diet_recs.extend([
+            "Prioritize cruciferous vegetables (broccoli, cauliflower, cabbage) rich in cancer-fighting compounds",
+            "Include foods high in antioxidants like berries, leafy greens, and green tea",
+            "Increase fiber intake through whole grains and legumes",
+            "Consider limiting red meat and processed foods",
+            "Ensure adequate vitamin D and calcium intake"
+        ])
+    elif risk_level == "medium":
+        diet_recs.extend([
+            "Include a variety of colorful fruits and vegetables daily",
+            "Choose whole grains over refined grains",
+            "Include lean proteins and fatty fish rich in omega-3",
+            "Minimize processed foods and sugary drinks",
+            "Stay well-hydrated with water throughout the day"
+        ])
+    else:
+        diet_recs.extend([
+            "Maintain a balanced diet with plenty of fresh produce",
+            "Include healthy fats from nuts, seeds, and olive oil",
+            "Choose whole, unprocessed foods when possible",
+            "Stay hydrated with water and herbal teas"
+        ])
+
+    # Exercise recommendations based on age and risk
+    exercise_recs = []
+    if age > 60:
+        exercise_recs.extend([
+            "Start with gentle activities like walking or swimming",
+            "Include balance exercises to prevent falls",
+            "Consider low-impact activities like yoga or tai chi",
+            "Aim for 30 minutes of activity most days of the week"
+        ])
+    elif risk_level == "high":
+        exercise_recs.extend([
+            "Begin with moderate activities under medical supervision",
+            "Include both cardio and strength training exercises",
+            "Focus on activities that maintain a healthy weight",
+            "Consider working with a certified fitness trainer"
+        ])
+    else:
+        exercise_recs.extend([
+            "Aim for 150 minutes of moderate exercise weekly",
+            "Mix cardio activities with strength training",
+            "Try activities like brisk walking, cycling, or swimming",
+            "Include flexibility exercises in your routine"
+        ])
+
+    # Warning signs based on risk level and markers
+    warning_signs = []
+    if risk_level == "high":
+        warning_signs.extend([
+            "Schedule monthly self-examinations",
+            "Report any unusual bloating or pelvic pain promptly",
+            "Monitor changes in appetite or feeling full quickly",
+            "Track any unexplained weight changes",
+            "Note changes in bathroom habits"
+        ])
+    elif risk_level == "medium":
+        warning_signs.extend([
+            "Conduct regular self-examinations",
+            "Monitor any persistent bloating",
+            "Note changes in energy levels",
+            "Track menstrual changes if pre-menopausal",
+            "Report unexpected weight loss or gain"
+        ])
+    else:
+        warning_signs.extend([
+            "Maintain awareness of your body's normal patterns",
+            "Schedule regular check-ups and screenings",
+            "Monitor any persistent changes in health",
+            "Keep track of family health history updates"
+        ])
+
+    # Wellness tips based on risk and age
+    wellness_tips = []
+    if risk_level == "high":
+        wellness_tips = [
+            "Prioritize stress reduction through meditation or counseling",
+            f"Schedule regular check-ups every {3 if age > 50 else 6} months",
+            "Maintain a symptom diary to track any changes"
+        ]
+    elif risk_level == "medium":
+        wellness_tips = [
+            "Practice relaxation techniques daily",
+            "Ensure 7-8 hours of quality sleep",
+            "Build a strong support network"
+        ]
+    else:
+        wellness_tips = [
+            "Maintain a consistent sleep schedule",
+            "Practice regular stress management",
+            "Stay socially connected and active"
+        ]
+
+    # Format the advice into HTML
+    return {
+        'risk_factors': f"""<ul class='list-disc pl-5 space-y-2'>
+            {''.join(f"<li>{item}</li>" for item in get_risk_factor_list(risk_level, age, is_postmenopausal))}
+        </ul>""",
+        'diet': f"""<ul class='list-disc pl-5 space-y-2'>
+            {''.join(f"<li>{item}</li>" for item in diet_recs)}
+        </ul>""",
+        'exercise': f"""<ul class='list-disc pl-5 space-y-2'>
+            {''.join(f"<li>{item}</li>" for item in exercise_recs)}
+        </ul>""",
+        'wellness_tips': wellness_tips,
+        'warning_signs': f"""<ul class='list-disc pl-5 space-y-2'>
+            {''.join(f"<li>{item}</li>" for item in warning_signs)}
+        </ul>"""
+    }
+
+def get_risk_factor_list(risk_level, age, is_postmenopausal):
+    """Generate risk factor list based on patient characteristics"""
+    factors = []
+    
+    # Age-related factors
+    if age > 60:
+        factors.append("Age is a significant risk factor (risk increases with age)")
+    elif age > 50:
+        factors.append("Age is approaching higher risk category (monitor closely)")
+    
+    # Menopausal status
+    if is_postmenopausal:
+        factors.append("Post-menopausal status may increase risk")
+    
+    # Risk-level specific factors
+    if risk_level == "high":
+        factors.extend([
+            "Consider genetic counseling and testing",
+            "Family history may play a significant role",
+            "Regular screening is essential"
+        ])
+    elif risk_level == "medium":
+        factors.extend([
+            "Regular monitoring of risk factors advised",
+            "Consider lifestyle modifications",
+            "Discuss screening schedule with healthcare provider"
+        ])
+    else:
+        factors.extend([
+            "Maintain awareness of family history",
+            "Continue regular check-ups",
+            "Monitor any changes in health"
+        ])
+    
+    return factors
+
+def get_default_advice():
+    """Provide basic default advice when personalization fails"""
+    return get_personalized_default_advice("medium", 45, False, {})
+
+def extract_section(text, start_marker, end_marker):
+    """Extract and clean a section from the response"""
+    try:
+        # Find the section start
+        start_idx = text.lower().find(start_marker.lower())
+        if start_idx == -1:
+            return "Information not available"
+            
+        # Move to the content start
+        content_start = text.find('\n', start_idx)
+        if content_start == -1:
+            content_start = start_idx + len(start_marker)
+        else:
+            content_start += 1
+            
+        # Find the section end
+        if end_marker:
+            end_idx = text.lower().find(end_marker.lower(), content_start)
+            if end_idx == -1:
+                end_idx = len(text)
+        else:
+            end_idx = len(text)
+            
+        # Extract and clean the content
+        content = text[content_start:end_idx].strip()
+        if not content:
+            return "Information not available"
+            
+        return content
+    except Exception as e:
+        logger.error(f"Error extracting section {start_marker}: {str(e)}")
+        return "Information not available"
+
+def extract_wellness_tips(wellness_text):
+    """Extract wellness tips into a list of concise, actionable items"""
+    try:
+        if not wellness_text or wellness_text == "Information not available":
+            return get_default_advice()['wellness_tips']
+            
+        # Split into lines and clean up
+        lines = [line.strip('•- ').strip() for line in wellness_text.split('\n')]
+        tips = [line for line in lines if line and len(line) > 10]  # Filter out empty/short lines
+        
+        if len(tips) >= 3:
+            return tips[:3]  # Return first 3 substantial tips
+        else:
+            # Pad with defaults if needed
+            defaults = [
+                "Maintain regular health check-ups",
+                "Practice stress management through meditation or deep breathing",
+                "Ensure adequate sleep and rest"
+            ]
+            return (tips + defaults)[:3]
+    except Exception as e:
+        logger.error(f"Error extracting wellness tips: {str(e)}")
+        return get_default_advice()['wellness_tips']
