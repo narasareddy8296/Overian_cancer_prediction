@@ -5,38 +5,38 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+REQUIRED_FEATURES = [
+    'Age', 'Menopause', 'GGT', 'HGB', 'AFP', 'CA72-4',
+    'ALP', 'CA19-9', 'HE4', 'CEA', 'CA125', 'Ca'
+]
+
 def get_default_input():
-    """Return all required features with default values"""
-    return {
-        'SUBJECT_ID': 999,
-        'AFP': 2.5, 'AG': 20.0, 'Age': 45, 'ALB': 4.0,
-        'ALP': 70.0, 'ALT': 20.0, 'AST': 20.0,
-        'BASO#': 0.1, 'BASO%': 1.0, 'BUN': 15.0,
-        'Ca': 9.5, 'CA125': 35.0, 'CA19-9': 15.0,
-        'CA72-4': 2.0, 'CEA': 2.5, 'CL': 100.0,
-        'CO2CP': 24.0, 'CREA': 0.9, 'TYPE': 0,
-        'DBIL': 0.2, 'EO#': 0.2, 'EO%': 2.0,
-        'GGT': 25.0, 'GLO': 3.0, 'GLU.': 90.0,
-        'HCT': 40.0, 'HE4': 40.0, 'HGB': 14.0,
-        'IBIL': 0.8, 'K': 4.0, 'LYM#': 2.0,
-        'LYM%': 30.0, 'MCH': 30.0, 'MCV': 90.0,
-        'Menopause': 0, 'Mg': 2.0, 'MONO#': 0.5,
-        'MONO%': 7.0, 'MPV': 10.0, 'Na': 140.0,
-        'NEU': 60.0, 'PCT': 0.2, 'PDW': 12.0,
-        'PHOS': 3.5, 'PLT': 250.0, 'RBC': 4.5,
-        'RDW': 13.0, 'TBIL': 1.0, 'TP': 7.0,
-        'UA': 5.0
+    """Return only required features with default values"""
+    all_defaults = {
+        'Age': 45, 'Menopause': 0, 'GGT': 25.0, 'HGB': 14.0,
+        'AFP': 2.5, 'CA72-4': 2.0, 'ALP': 70.0, 'CA19-9': 15.0,
+        'HE4': 40.0, 'CEA': 2.5, 'CA125': 35.0, 'Ca': 9.5
     }
+    return all_defaults
 
 def load_models():
     try:
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         models_dir = os.path.join(base_dir, 'models')
-        model_path = os.path.join(models_dir, 'xgboost_model.pkl')
+        
+        # Check if the model file exists
+        if not os.path.exists(models_dir):
+            raise FileNotFoundError(f"Models directory not found at {models_dir}")
+            
+        model_files = [f for f in os.listdir(models_dir) if f.endswith('.pkl')]
+        if not model_files:
+            raise FileNotFoundError(f"No .pkl model files found in {models_dir}")
+            
+        model_path = os.path.join(models_dir, model_files[0])  # Take the first .pkl file found
+        logger.info(f"Loading model from {model_path}")
         
         model = joblib.load(model_path)
-        columns = list(get_default_input().keys())  # Use all features in correct order
-        
+        columns = REQUIRED_FEATURES  # Use only required features
         logger.info("Model loaded successfully")
         return model, columns
     except Exception as e:
@@ -45,17 +45,28 @@ def load_models():
 
 def predict_tabular(model, columns, input_data):
     try:
-        # Start with default values
+        # Validate inputs
+        if model is None:
+            raise ValueError("Model is not loaded")
+        if not columns:
+            raise ValueError("No feature columns provided")
+        if not isinstance(input_data, dict):
+            raise ValueError("Input data must be a dictionary")
+
+        # Start with default values for required features only
         prediction_data = get_default_input()
+        logger.info(f"Starting prediction with {len(input_data)} provided features")
         
-        # Update with provided values
-        prediction_data.update(input_data)
+        # Filter input_data to only include required features
+        filtered_input = {k: v for k, v in input_data.items() if k in REQUIRED_FEATURES}
+        prediction_data.update(filtered_input)
         
-        # Create DataFrame with all required features
+        # Create DataFrame with only required features
         df = pd.DataFrame([prediction_data])
+        df = df[columns]  # Ensure correct column order
         
-        # Ensure columns are in correct order
-        df = df[columns]
+        # Log feature shape
+        logger.info(f"Feature shape: {df.shape}, Expected features: {len(columns)}")
         
         # Make prediction
         prediction = model.predict(df)[0]
@@ -68,4 +79,6 @@ def predict_tabular(model, columns, input_data):
         }
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
+        logger.error(f"Input data keys: {list(input_data.keys())}")
+        logger.error(f"Expected columns: {columns}")
         return None

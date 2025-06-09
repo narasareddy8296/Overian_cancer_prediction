@@ -211,15 +211,21 @@
                     <p class="text-gray-400">Analyzing results...</p>
                 </div>
             `;
-            
-            fetch('/predict_lab', {
+                  fetch('/predict_lab', {
                 method: 'POST',
                 body: formData,
                 cache: 'no-store' // Prevent caching of results
             })
-            .then(response => response.text())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(response.statusText);
+                }
+                return response.text();
+            })
             .then(html => {
                 document.getElementById('result-container').innerHTML = html;
+                // Scroll to results
+                document.getElementById('result-container').scrollIntoView({ behavior: 'smooth' });
             })
             .catch(error => {
                 document.getElementById('result-container').innerHTML = `

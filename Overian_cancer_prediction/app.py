@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, make_response, redirect, url_for, session, flash
-from utils.model_utils import load_models, predict_tabular
+from utils.model_utils import load_models, predict_tabular, get_default_input
 from utils.db import create_user, create_verification_token, verify_user, verify_login
 from utils.email_utils import send_verification_email
 from utils.llm_utils import generate_health_advice  # Removed load_model
@@ -56,43 +56,43 @@ def calculate_risk_adjustment(family_history, smoking_status, alcohol_consumptio
     
     # Family history risk (10-15% of ovarian cancers are hereditary)
     if family_history == 1:  # First-degree relative
-        additional_risk += 0.15  # 3-4 times higher risk → +15%
+        additional_risk += 0.10  # Reduced from 0.15 to 0.10 for more balanced assessment
         risk_details.append({
             'factor': 'Family History (First-degree relative)',
-            'increase': '15%',
-            'details': 'Having a first-degree relative with ovarian cancer increases risk 3-4 times.'
+            'increase': '10%',
+            'details': 'Having a first-degree relative with ovarian cancer increases risk.'
         })
     elif family_history == 2:  # Multiple relatives
-        additional_risk += 0.25  # Up to 10-15 times higher risk → +25%
+        additional_risk += 0.15  # Reduced from 0.25 to 0.15 for more balanced assessment
         risk_details.append({
             'factor': 'Family History (Multiple relatives)',
-            'increase': '25%',
-            'details': 'Multiple family members with ovarian cancer can increase risk up to 10-15 times.'
+            'increase': '15%',
+            'details': 'Multiple family members with ovarian cancer indicates increased risk.'
         })
     
     # Smoking risk (1.2-1.8x higher for mucinous type)
     if smoking_status == 2:  # Current smoker
-        additional_risk += 0.08  # +8% risk increase
+        additional_risk += 0.05  # Reduced from 0.08 to 0.05
         risk_details.append({
             'factor': 'Current Smoker',
-            'increase': '8%',
-            'details': 'Smoking increases risk 1.2-1.8 times, particularly for mucinous ovarian cancer.'
+            'increase': '5%',
+            'details': 'Smoking may increase risk, particularly for mucinous ovarian cancer.'
         })
     elif smoking_status == 1:  # Former smoker
-        additional_risk += 0.04  # +4% risk increase
+        additional_risk += 0.02  # Reduced from 0.04 to 0.02
         risk_details.append({
             'factor': 'Former Smoker',
-            'increase': '4%',
-            'details': 'Former smoking status still carries some increased risk.'
+            'increase': '2%',
+            'details': 'Former smoking status carries a slightly increased risk.'
         })
     
     # Alcohol consumption (minimal evidence for increased risk)
     if alcohol_consumption >= 3:  # Heavy drinking
-        additional_risk += 0.03  # +3% risk increase
+        additional_risk += 0.02  # Reduced from 0.03 to 0.02
         risk_details.append({
             'factor': 'Heavy Alcohol Consumption',
-            'increase': '3%',
-            'details': 'Heavy alcohol consumption may slightly increase risk, though evidence is limited.'
+            'increase': '2%',
+            'details': 'Heavy alcohol consumption may slightly increase risk.'
         })
     
     return additional_risk, risk_details
@@ -114,58 +114,78 @@ def predict_lab():
         response.headers["Pragma"] = "no-cache"
         response.headers["Expires"] = "0"
 
+        # Reload model for fresh prediction
+        new_model, new_columns = load_models()
+        if new_model is None or new_columns is None:
+            raise RuntimeError("Failed to load models for prediction")
+            
+        # Save globally in case we need them later
+        global model, columns
+        model, columns = new_model, new_columns
+
         # Get lifestyle/history factors separately
         family_history = safe_int(request.form.get('family_history', '0'), 0)
         smoking_status = safe_int(request.form.get('smoking_status', '0'), 0)
         alcohol_consumption = safe_int(request.form.get('alcohol_consumption', '0'), 0)
 
-        # Get form data with safe conversion (without lifestyle factors)
-        input_data = {
-            'Age': safe_int(request.form.get('age', ''), 45),
-            'Menopause': safe_int(request.form.get('menopause', '0'), 0),
-            'GGT': safe_float(request.form.get('ggt', ''), 25.0),
-            'HGB': safe_float(request.form.get('hgb', ''), 14.0),
-            'AFP': safe_float(request.form.get('afp', ''), 2.5),
-            'CA72-4': safe_float(request.form.get('ca72_4', ''), 2.0),
-            'ALP': safe_float(request.form.get('alp', ''), 70.0),
-            'CA19-9': safe_float(request.form.get('ca19_9', ''), 15.0),
-            'HE4': safe_float(request.form.get('he4', ''), 40.0),
-            'CEA': safe_float(request.form.get('cea', ''), 2.5),
-            'CA125': safe_float(request.form.get('ca125', ''), 35.0),
-            'Ca': safe_float(request.form.get('ca', ''), 9.5)
+        # Initialize input_data with only the fields we want to update from the form
+        input_data = {}
+        
+        # Map form fields to model features
+        form_to_model = {
+            'age': 'Age',
+            'menopause': 'Menopause',
+            'ggt': 'GGT',
+            'hgb': 'HGB',
+            'afp': 'AFP',
+            'ca72_4': 'CA72-4',
+            'alp': 'ALP',
+            'ca19_9': 'CA19-9',
+            'he4': 'HE4',
+            'cea': 'CEA',
+            'ca125': 'CA125',
+            'ca': 'Ca'
         }
         
-        # Reload model for fresh prediction
-        model, columns = load_models()
-        if model is None or columns is None:
-            raise RuntimeError("Failed to load models for prediction")
+        # Only update values that were actually provided in the form
+        for form_field, model_field in form_to_model.items():
+            value = request.form.get(form_field, '')
+            if value:  # Only include non-empty values
+                if form_field in ['age', 'menopause']:
+                    input_data[model_field] = safe_int(value, get_default_input()[model_field])
+                else:
+                    input_data[model_field] = safe_float(value, get_default_input()[model_field])
+        
+        logger.info(f"Making prediction with {len(input_data)} features")
             
         # Get model prediction
         result = predict_tabular(model, columns, input_data)
         if result is None:
-            return render_template('index.html', 
+            return render_template('result.html', 
                                 error="Unable to generate prediction. Please try again.",
-                                form_data=input_data)
-            
-        # Calculate additional risk from lifestyle factors
+                                input_data=input_data)
+              # Calculate additional risk from lifestyle factors
         additional_risk, risk_details = calculate_risk_adjustment(family_history, smoking_status, alcohol_consumption)
         
-        # Adjust probability with lifestyle factors (capped at 95%)
-        final_probability = min(0.95, result['probability'] + additional_risk)
+        # Scale the additional risk based on the base probability
+        # This ensures lifestyle factors have proportional impact
+        scaled_additional_risk = additional_risk * result['probability']
+        
+        # Adjust probability with scaled lifestyle factors (capped at 95%)
+        final_probability = min(0.95, result['probability'] + scaled_additional_risk)
         result['probability'] = final_probability
+        
+        # Determine risk level and styling
+        risk_level = "high" if final_probability > 0.7 else "medium" if final_probability > 0.3 else "low"
+        risk_color = {
+            "high": "text-red-500",
+            "medium": "text-yellow-500",
+            "low": "text-green-500"
+        }[risk_level]
 
         try:
             # Generate health advice
             advice = generate_health_advice(input_data, result)
-            
-            # Determine risk level and styling
-            risk_level = "high" if final_probability > 0.7 else "medium" if final_probability > 0.3 else "low"
-            risk_color = {
-                "high": "text-red-500",
-                "medium": "text-yellow-500",
-                "low": "text-green-500"
-            }[risk_level]
-              
             
             # Render template with all results
             return render_template(
@@ -188,12 +208,14 @@ def predict_lab():
                 risk_color=risk_color,
                 probability=f"{final_probability:.1%}",
                 error="Unable to generate detailed health advice. Please consult with your healthcare provider.",
-                input_data=input_data
+                input_data=input_data,
+                now=datetime.now()
             )
         
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
-        return f'<div class="bg-red-50 border border-red-200 text-red-800 rounded-lg p-4">Error: {str(e)}</div>', 400
+        logger.error("Form data:", str(dict(request.form)))
+        return render_template('result.html', error=f"An error occurred: {str(e)}")
 
 @app.route('/login')
 def login():
@@ -298,4 +320,5 @@ def auth_login():
         return redirect(url_for('login'))
 
 if __name__ == '__main__':
-    app.run(debug=DEBUG)
+    app.run(debug=True)
+    
